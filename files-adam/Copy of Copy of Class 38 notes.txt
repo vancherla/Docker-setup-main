@@ -1,0 +1,82 @@
+===============
+terraform{
+  backend "s3" {
+     bucket = "wezva-adam-demo-s3"
+key = "default/terraform.tfstate" # path & file which will hold the state #
+region = "ap-south-1"
+  }
+}
+===================================Image Module
+$ vi main.tf
+resource "docker_image" "myimage" {
+  name = "${var.image_name}"
+}
+
+$ vi variables.tf
+variable "image_name" {
+  description = "Image for container."
+}
+
+output "image_out" {
+  value       = "${docker_image.myimage.latest}"
+}
+
+$ terraform plan -var 'image_name=centos'
+============Container Module
+$ vi main.tf
+resource "docker_container" "container_id" {
+  name  = "${var.container_name}"
+  image = "${var.image}"
+  ports {
+    internal = "${var.int_port}"
+    external = "${var.ext_port}"
+  }
+}
+
+ 
+$ vi variables.tf
+variable "container_name" {}
+variable "image" {}
+variable "int_port" {}
+variable "ext_port" {}
+
+$ terraform plan –var 'container_name=wezva' -var 'image=nginx:latest' -var 'int_port=80' -var 'ext_port=80'
+======================Root Module
+# Download the image
+module "image" {
+  source = "./modules/image"
+  image_name  = "${var.myimage}"
+}
+
+# Start the container
+module "container" {
+  source             = "./modules/container"
+  image              = "${module.image.image_out}"
+  container_name     = "${var.container_name}"
+  int_port           = "${var.int_port}"
+  ext_port           = "${var.ext_port}"
+}
+
+$ vi variables.tf
+
+#Define variables
+variable "container_name" {
+  description = "Name of the container."
+  default     = "wezva"
+}
+variable "myimage" {
+  description = "Image for container."
+  default     = "nginx:latest"
+}
+variable "int_port" {
+  description = "Internal port for container."
+  default     = "80"
+}
+variable "ext_port" {
+  description = "External port for container."
+  default     = "80"
+}
+Thanks & Regards,
+
+*Ajitha Gomathi*
+*WEZVA Coordinator* | Mob : +91-9739110917

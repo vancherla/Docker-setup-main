@@ -1,0 +1,31 @@
+Class 9 Notes: June 16th
+==================
+$ apt update
+$ apt install -y openjdk-8-jdk
+
+$ wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+$ sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > \
+    /etc/apt/sources.list.d/jenkins.list'
+
+$ apt update
+$ apt install -y Jenkins
+
+On Master:
+$ ssh-keygen -t rsa
+
+Setup Passwordless SSH between Jenkins Master & Slave
+Take the content of ~/.ssh/id_rsa.pub (as ubuntu user) from master
+Put it in ~/.ssh/authorized_keys on slave as ubuntu user
+
+Setup Slave on Jenkins
+ Add new node & make sure the Remote Root Directory has read/write permission for Ubuntu user
+Choose Launch method as "SSH"
+Give the private IP of the EC2 slave for "Host"
+Add Credentials, choose Kind as "SSH Username with private key"
+Give user name as "ubuntu" & put the content of "~/.ssh/id_rsa" from master as ubuntu & put it as private key content
+Choose 'Host Key Verification Strategy' as "Manually trusted key verification strategy"
+
+Thanks & Regards,
+
+*Ajitha Gomathi*
+*WEZVA Coordinator* | Mob : +91-9739110917

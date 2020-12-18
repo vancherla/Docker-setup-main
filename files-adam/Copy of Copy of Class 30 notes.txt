@@ -1,0 +1,66 @@
+--- # your playbook
+- hosts: <hostname|groupname|all>
+  become: <yes|no>
+  become_user: <username>
+  connection: <ssh|winrm|local>
+  gather_facts: <yes|no>
+  vars:
+    - <varname>: <value>   # {{varname}}
+    - <varname>: <value>
+  tasks:
+     - name: <Name of the task>
+       <module>: <arbituary cmds>
+       notify: <handler-Name of the task>
+     - name: <Name of the task>
+       <module>: <arbituary cmds>
+       register: <varname>
+     - debug: var=<varname>.<propertyname>
+  handlers:
+     - name: <handler-Name of the task>
+       <module>: <arbituary cmds>
+
+ 
+---
+- hosts: demo
+  become: yes
+  vars:
+    - mypkg: apache2
+  tasks:
+    - name: Install Git
+      apt: name=git state=present
+    - name: Install Apache
+      apt: name='{{mypkg}}' state=present
+    - name: Start Apache
+      service: name='{{mypkg}}' state=started
+    - name: print myname
+      command: echo hi-adam
+      register: output
+    - debug: var=output.stdout
+    - name: Print Memory Used
+      command: echo '{{ansible_memfree_mb}}'
+      register: output
+    - debug: var=output.stdout
+
+Extra vars
+ local variable
+  Node variable
+   group variable
+----------------
+---
+- hosts: demo
+  become: yes
+  tasks:
+    - name: Install Git
+      apt: name=git state=absent
+    - name: Install Apache
+      apt: name=apache2 state=present
+      notify: Start Apache
+  handlers:
+    - name: Start Apache
+      service: name=apache2 state=started
+
+Thanks & Regards,
+
+*Ajitha Gomathi*
+*WEZVA Coordinator* | Mob : +91-9739110917
+

@@ -1,0 +1,33 @@
+1. Domain Name - devopsk8s.xyz
+2. AWS Account
+3. S3 Bucket & Route53 Domain Integration
+4. Deploy a Mgmt Server which holds all scripts.
+5. KOPS Binary(K8S Cluster Mgmt) & KUBECTL Binary(K8S Cluster Ops)
+6. SSH Public & Private Keys
+7. AWS CLI and AWS Access/Secret Key
+
+
+kops create cluster --name=devopsk8s.xyz --state=s3://devopsk8s.xyz --zones=us-east-1a --node-count=2 --node-size=t2.micro --master-size=t2.small --master-volume-size 20 --node-volume-size 10 --dns-zone=devopsk8s.xyz --yes
+
+kops get cluster --state s3://devopsk8s.xyz
+kops get ig --name devopsk8s.xyz --state s3://devopsk8s.xyz
+kops edit ig --name=devopsk8s.xyz master-us-east-1a --state s3://devopsk8s.xyz
+kops edit ig --name=devopsk8s.xyz nodes --state s3://devopsk8s.xyz
+kops update cluster --name devopsk8s.xyz --yes --state  s3://devopsk8s.xyz
+kops rolling-update cluster  --name devopsk8s.xyz --yes --state  s3://devopsk8s.xyz
+kops delete cluster --name=devopsk8s.xyz --state s3://devopsk8s.xyz --yes
+
+
+MINIKUBE:
+sudo apt-get update && sudo apt-get install -y apt-transport-https
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubectl conntrack
+curl https://get.docker.com | bash
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && chmod +x minikube
+sudo mv minikube /usr/local/bin
+set NO_PROXY=localhost,127.0.0.1,10.96.0.0/12,192.168.99.1/24,192.168.39.0/24
+
+minikube start --vm-driver=none
+

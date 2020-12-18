@@ -1,0 +1,59 @@
+Create a user for Prometheus on your system
+$ useradd -rs /bin/false prometheus
+ 
+Create a new folder and a new configuration file for Prometheus
+$ mkdir /etc/prometheus
+$ touch /etc/prometheus/prometheus.yml
+
+Create a data folder for Prometheus
+$ mkdir -p /data/prometheus
+$ chown prometheus:prometheus /data/prometheus /etc/prometheus/*
+
+Edit the /etc/prometheus/prometheus.yml & add the following
+global:
+  scrape_interval: 5s
+  evaluation_interval: 1m
+# A scrape configuration scraping a Node Exporter and the Prometheus server itself
+scrape_configs:
+  # Scrape Prometheus itself every 10 seconds.
+  - job_name: 'prometheus'
+    scrape_interval: 10s
+    static_configs:
+    - targets: ['localhost:9090']
+  - job_name: 'BuildMachine_metrics'
+    static_configs:
+    - targets: ['172.31.41.193:9100']
+
+------------------------------------------
+Create the Prometheus container
+$ docker run --name myprom -d -p 9090:9090 --user 999:999 --net=host -v /etc/prometheus:/etc/prometheus -v /data/prometheus:/data/prometheus prom/prometheus --config.file="/etc/prometheus/prometheus.yml" --storage.tsdb.path="/data/prometheus"
+
+Create a Grafana container
+$ docker run --name grafana -d -p 3000:3000 --net=host grafana/grafana
+==================Monitor a Machine
+Create a user for Node Exporter
+$ useradd -rs /bin/false node_exporter
+$ cat /etc/passwd | grep node_exporter
+   node_exporter:x:998:998::/home/node_exporter:/bin/false
+
+Creating Node exporter container
+$ docker run --name exporter -d -p 9100:9100 --user 999:999 -v "/:/hostfs" --net="host" prom/node-exporter --path.rootfs=/hostfs
+ 
+Verify that the Node exporter is running
+$ curl http://localhost:9100/metrics
+
+======================Monitor a Container
+Run Cadvisor container to collect container metrics
+$ docker run --name cadvisor -d -p 8080:8080 -v /:/rootfs:ro -v /var/run:/var/run:rw -v /sys:/sys:ro -v /var/lib/docker/:/var/lib/docker:ro google/cadvisor
+
+Edit /etc/prometheus/prometheus.yml & add a job for Cadvisor:
+- job_name: 'cadvisor'
+  scrape_interval: 5s
+  static_configs:
+   - targets: ['localhost:8080']
+
+
+Thanks & Regards,
+
+*Ajitha Gomathi*
+*WEZVA Coordinator* | Mob : +91-9739110917

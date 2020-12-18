@@ -1,0 +1,252 @@
+=====================
+task1:
+async: timeout (30 sec)
+poll: 10 sec
+ (- machine1  | - machine2 |  - machine3)
+task2:
+ - machine1
+ - machine2
+ - machine3
+-----------------------------
+--- # Running tasks parallel
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install Apache
+      apt: name=apache2 state=present
+      async: 30
+      poll: 5
+================
+--- # Running tasks parallel
+- hosts: all
+  become: yes
+  tasks:
+    - name: print name
+      command: echo hi-adam
+      delegate_to: Node01
+      run_once: true
+    - name: EOT
+      command: echo EOT
+=============
+--- # Running tasks parallel
+- hosts: demo
+  become: yes
+  tasks:
+    - name: Create user1
+      user: name={{item}} state=present
+      with_items:
+        - user1
+        - user2
+        - user3
+
+task1:
+  - machine1 - user1
+             - user2
+             - user3
+  - machine2 - user1
+             - user2
+             - user3
+=============
+--- # Loop Playbook
+- hosts: demo
+  sudo: yes
+  tasks:
+    - debug:
+        msg: "{{item}}"
+      with_file:
+        - testfile
+=============
+--- # Loop Playbook
+- hosts: demo
+  become: yes
+  tasks:
+    - name: Install Apache2
+      apt: name=apache2 state=present
+      when: ansible_os_family == "Debian"
+    - name: Install Httpd
+      yum: name=httpd state=present
+      when: ansible_os_family == "RedHat"
+    - name: print numbers
+      command: echo {{ item }}
+      with_items: [ 0, 2, 4, 6, 8, 10 ]
+      when: item > 5
+=======
+--- # Loop Playbook
+- hosts: demo
+  vars:
+   epic: true
+  tasks:
+    - name: EPIC
+      command: echo "this is certainly epic !"
+      when: epic
+    - name: NOT EPIC
+      command: echo "this certainly isn’t epic!"
+      when: not epic
+    - name: Get Stat
+      stat: path=/tmp/thefile
+      register: st
+    - debug: var=st.stat.exists
+    - name: Create file only if it doesnt exist
+      shell: touch /tmp/thefile
+      when: not st.stat.exists
+===========
+--- # When playbook example
+- hosts: demo
+  become: yes
+  tasks:
+    - name: Install apache for debian
+      apt: name=apache2 state=present
+      when: ansible_os_family == "Debian" or ansible_os_family == "Fedora"
+    - name: Install apache for redhat
+      command: yum -y install httpd
+      when: ansible_os_family == "RedHat" and ansible_pkg_mgr == "yum"
+=============
+--- # When playbook example
+- hosts: demo
+  tasks:
+     - name:  This will not be considered as Failure
+       command: /bin/false
+       ignore_errors: yes
+     - name: EOT
+       command: echo EOT
+===========
+--- # When playbook example
+- hosts: demo
+  tasks:
+  - name: wait for the service to start listening on port 80
+    wait_for:
+     port: 80
+     state: started
+  - name: wait until the file is present before continuing
+    wait_for:
+      path: /tmp/dummy
+      search_regex: "hi adam"
+      delay: 10
+      timeout: 30
+  - name: EOT
+    command: echo EOT
+
+
+
+Thanks & Regards,
+
+*Ajitha Gomathi*
+*WEZVA Coordinator* | Mob : +91-9739110917
+
+
+Website  : http://www.wezva.com | Facebook : https://www.facebook.com/wezva
+| Linkedin : https://www.linkedin.com/in/wezva
+
+
+DevOpsLearnEasy <scmlearningcentre@gmail.com>
+12:00 (25 minutes ago)
+to bcc: me
+
+=======
+---
+- hosts: demo
+  vars:
+    myname: Adam
+  tasks:
+    - name: Ansible Template Example
+      template:
+        src: test.j2
+        dest: /tmp/testfile
+-------
+test.j2:
+Hello {{myname}}
+-------------
+{% for i in range(3)%}
+  hello {{myname}} - {{i}}
+{% endfor %}
+===============
+---
+- hosts: demo
+  vars:
+    mylist: ['adam', 'm' ,'devops']
+  tasks:
+    - name: Ansible Template Example
+      template:
+        src: test.j2
+        dest: /tmp/testfile
+
+test.j2:
+{% for item in mylist %}
+  Hello {{ item }}
+{% endfor %}
+==================================
+---
+- hosts: demo
+  tasks:
+  - name: task 1
+    command: echo cheema
+    tags:
+     - cheema
+  - name: task 2
+    command: echo Ajay
+    tags:
+     - ajay
+     - group1
+  - name: task 3
+    command: echo Pavan
+    tags:
+     - pavan
+  - name: task 4
+    command: echo Rahul
+    tags:
+     - rahul
+     - group1
+  - name: task 5
+    command: echo Rohit
+    tags:
+     - rohit
+     - group1
+========================================
+- name: Install httpd
+  apt: pkg=apache2 state=latest
+-----------------------------
+--- # Include Task
+- hosts: demo
+  become: yes
+  tasks:
+    - include: inc.yml
+    - name: verify the httpd is installed
+      shell: apt list --installed| grep apache > /tmp/result.log
+================
+---
+- hosts: demo
+  tasks:
+  - name: sample
+    shell: echo sample
+======
+--- # Import full playbook
+- import_playbook: sample.yml
+  when: env == 'development'
+===============================
+master.yml
+roles/
+      dev/
+         tasks/main.yml
+         vars/main.yml
+      qa/
+         tasks/main.yml
+         vars/main.yml
+         handlers/main.yml
+
+master.yml
+==========
+---
+- hosts: demo
+  pre_tasks:
+    - name: pre-task
+      command: echo pretask
+  roles:
+    - { role: dev, when: ansible_os_family == "RedHat" }
+    - { role: qa, when: ansible_os_family == "Debian" }
+  post_tasks:
+    - name: post-task
+      command: echo posttask
+Thanks & Regards,
+
+*Ajitha Gomathi*
+*WEZVA Coordinator* | Mob : +91-9739110917

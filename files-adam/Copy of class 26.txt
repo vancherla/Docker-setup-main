@@ -1,0 +1,240 @@
+Setup Master on AWS EC2 – Ubuntu (2 cpu):
+Install Docker CE
+$ apt update
+$ apt install -y docker.io
+
+Add the repo for Kubernetes
+$ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+$ cat << EOF > /etc/apt/sources.list.d/kubernetes.list
+  deb http://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+Install Kubernetes components
+$ apt update
+$ apt install -y kubelet kubeadm kubectl
+
+Initialize the cluster using the IP range for Flannel.
+$ kubeadm init --pod-network-cidr=10.244.0.0/16
+Copy the kubeadmin join command that is in the output. We will need this later.
+
+Add port obtained from above cmd in the Inbound rules
+
+Exit sudo and copy the admin.conf to your home directory and take ownership as normal user
+$ mkdir -p $HOME/.kube
+$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+You should now deploy a pod network to the cluster
+$ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+
+Setup node on AWS EC2 – Ubuntu: (t2.micro)
+Install Docker CE
+$ apt update
+$ apt install -y docker.io
+
+Add the repo for Kubernetes
+$ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+$ cat << EOF > /etc/apt/sources.list.d/kubernetes.list
+  deb http://apt.kubernetes.io/ kubernetes-xenial main
+EOF
+
+Install Kubernetes components
+$ apt update
+$ apt install -y kubeadm
+Join the cluster by running the output cmd obtained from ‘kubadm init’ on master  as root:
+
+===============
+apiVersion: apps/v1
+kind: DaemonSet      # Type of Object
+metadata:
+  name: demodaemonset
+  namespace: default
+  labels:
+    env: demo
+spec:
+  selector:
+    matchLabels:
+      env: demo
+  template:
+    metadata:
+      labels:
+        env: demo
+    spec:
+      containers:
+      - name: demoset
+        image: ubuntu
+        command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 8 ; done"]
+      nodeSelector:                    # Run pods only on matching nodes with label
+        server: group1
+
+kubectl label nodes <NodeName> server=group1
+=====================
+# Creating Statefulset
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: webapp
+spec:
+  serviceName: "nginx"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: k8s.gcr.io/nginx-slim:0.8
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+-----
+# Headless Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  ports:
+  - port: 80
+    name: web
+  clusterIP: None
+  selector:
+    app: nginx
+
+===========Job===
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: testjob
+spec:
+  template:
+    metadata:
+      name: testjob
+    spec:
+      containers:
+      - name: counter
+        image: centos:7
+        command: ["bin/bash", "-c", "echo Hi-Adam; sleep 5"]
+      restartPolicy: Never
+--------------
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: testjob
+spec:
+  parallelism: 5                           # Runs for pods in parallel
+  activeDeadlineSeconds: 10  # Timesout after 30 sec
+  template:
+    metadata:
+      name: testjob
+    spec:
+      containers:
+      - name: counter
+        image: centos:7
+        command: ["bin/bash", "-c", "echo Hi-Adam; sleep 20"]
+      restartPolicy: Never
+-------------
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+ name: adam
+spec:
+ schedule: "* * * * *"
+ jobTemplate:
+   spec:
+     template:
+       spec:
+         containers:
+         - image: ubuntu
+           name: adam
+           command: ["/bin/bash", "-c", "echo Hi-Adam; sleep 5"]
+         restartPolicy: Never
+=================Init Containers==
+apiVersion: v1
+kind: Pod
+metadata:
+  name: initcontainer
+spec:
+  initContainers:
+  - name: c1
+    image: centos
+    command: ["/bin/sh", "-c", "echo STAYHOME-STAYSAFE > /tmp/xchange/testfile; sleep 30"]
+    volumeMounts:        
+      - name: xchange
+        mountPath: "/tmp/xchange"  
+  containers:
+  - name: c2
+    image: centos
+    command: ["/bin/bash", "-c", "while true; do echo `cat /tmp/data/testfile`; sleep 5; done"]
+    volumeMounts:
+      - name: xchange
+        mountPath: "/tmp/data"
+  volumes:                            
+  - name: xchange
+    emptyDir: {}
+=================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-1.10
+spec:
+  replicas: 2
+  selector:      
+    matchLabels:
+      name: nginx
+      version: "1.10"
+  template:
+    metadata:
+      labels:
+        name: nginx
+        version: "1.10"
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.10
+          ports:
+            - name: http
+              containerPort: 80
+------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-1.10
+spec:
+  replicas: 2
+  strategy:
+    type: Recreate
+  selector:      
+    matchLabels:
+      name: nginx
+      version: "1.10"
+  template:
+    metadata:
+      labels:
+        name: nginx
+        version: "1.10"
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.11
+          ports:
+            - name: http
+              containerPort: 80

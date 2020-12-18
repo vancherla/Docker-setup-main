@@ -1,0 +1,108 @@
+=======
+---
+- hosts: demo
+  vars:
+    myname: Adam
+  tasks:
+    - name: Ansible Template Example
+      template:
+        src: test.j2
+        dest: /tmp/testfile
+-------
+test.j2:
+Hello {{myname}}
+-------------
+{% for i in range(3)%}
+  hello {{myname}} - {{i}}
+{% endfor %}
+===============
+---
+- hosts: demo
+  vars:
+    mylist: ['adam', 'm' ,'devops']
+  tasks:
+    - name: Ansible Template Example
+      template:
+        src: test.j2
+        dest: /tmp/testfile
+
+test.j2:
+{% for item in mylist %}
+  Hello {{ item }}
+{% endfor %}
+==================================
+---
+- hosts: demo
+  tasks:
+  - name: task 1
+    command: echo cheema
+    tags:
+     - cheema
+  - name: task 2
+    command: echo Ajay
+    tags:
+     - ajay
+     - group1
+  - name: task 3
+    command: echo Pavan
+    tags:
+     - pavan
+  - name: task 4
+    command: echo Rahul
+    tags:
+     - rahul
+     - group1
+  - name: task 5
+    command: echo Rohit
+    tags:
+     - rohit
+     - group1
+========================================
+- name: Install httpd
+  apt: pkg=apache2 state=latest
+-----------------------------
+--- # Include Task
+- hosts: demo
+  become: yes
+  tasks:
+    - include: inc.yml
+    - name: verify the httpd is installed
+      shell: apt list --installed| grep apache > /tmp/result.log
+================
+---
+- hosts: demo
+  tasks:
+  - name: sample
+    shell: echo sample
+======
+--- # Import full playbook
+- import_playbook: sample.yml
+  when: env == 'development'
+===============================
+master.yml
+roles/
+      dev/
+         tasks/main.yml
+         vars/main.yml
+      qa/
+         tasks/main.yml
+         vars/main.yml
+         handlers/main.yml
+
+master.yml
+==========
+---
+- hosts: demo
+  pre_tasks:
+    - name: pre-task
+      command: echo pretask
+  roles:
+    - { role: dev, when: ansible_os_family == "RedHat" }
+    - { role: qa, when: ansible_os_family == "Debian" }
+  post_tasks:
+    - name: post-task
+      command: echo posttask
+Thanks & Regards,
+
+*Ajitha Gomathi*
+*WEZVA Coordinator* | Mob : +91-9739110917

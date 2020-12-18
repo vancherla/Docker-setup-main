@@ -1,0 +1,598 @@
+class date-29th received
+====================
+ Install Docker
+$  sudo apt update && apt -y install docker.io
+
+ Install kubectl
+$  curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl &&   chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl
+
+ Install Minikube
+$  curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+
+ Start Minikube
+$  apt install conntrack
+$  minikube start --vm-driver=none
+$  minikube status
+=================================
+filename.yml or filename.yaml
+--- # comment
+- key1: value
+   key1.1: value
+   key1.2: value
+  key2: value
+- key3: value
+  key4: value
+    key4.1: value
+
+--- # students list
+- students:
+    student1:
+        name: bala
+    student2:
+      name: kalyan
+    student3:
+      name: pavan
+    student4:
+        name: arun
+====
+class-30th june
+=============
+kind: Pod                              # Object Type
+apiVersion: v1                     # API version
+metadata:                            # Set of data which describes the Object
+  name: testpod                  # Name of the Object
+spec:                                     # Data which describes the state of the Object
+  containers:                        # Data which describes the Container details
+    - name: c00                     # Name of the Container
+      image: ubuntu              # Base Image which is used to create Container
+      command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+  restartPolicy: Never         # Defaults to Always
+
+$ kubectl apply -f pod1.yml
+$ kubectl get pods -o wide
+$ kubectl describe pod testpod or kubectl describe pod/testpod
+$ kubectl logs -f testpod -c c00
+$ kubectl delete pod testpod or kubectl delete -f pod2.yml
+$ kubectl exec testpod3 -c c00 -- hostname -i
+========================================
+kind: Pod
+apiVersion: v1
+metadata:
+  name: testpod3
+spec:
+  containers:
+    - name: c00
+      image: ubuntu
+      command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+    - name: c01
+      image: ubuntu
+      command: ["/bin/bash", "-c", "while true; do echo Hello-Students; sleep 5 ; done"]
+====================================
+kind: Pod
+apiVersion: v1
+metadata:
+  name: environments
+spec:
+  containers:
+    - name: c00
+      image: ubuntu
+      command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+      env:                        # List of environment variables to be used inside the pod
+      - name: MYNAME
+        value: ADAM
+====================================
+kind: Pod
+apiVersion: v1
+metadata:
+  name: testpod4
+spec:
+  containers:
+    - name: c00
+      image: httpd
+      ports:
+       - containerPort: 80      
+=====================================
+kind: Pod
+apiVersion: v1
+metadata:
+  name: labelspod
+  labels:                                                    # Specifies the Label details under it
+    env: development
+    class: pods
+spec:
+    containers:
+       - name: c00
+         image: ubuntu
+         command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+
+$ kubectl get pods --show-labels
+$ kubectl label pods <podname> <labelkey>=<value>
+$ kubectl get pods -l env=development
+=======================
+kind: Pod
+apiVersion: v1
+metadata:
+  name: nodelabels
+  labels:
+    env: development
+spec:
+    containers:
+       - name: c00
+         image: ubuntu
+         command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+    nodeSelector:                                           # specifies which node to run the pod
+       hardware: t2-medium
+==============================
+kind: ReplicationController               # this defines to create the object of replication type
+apiVersion: v1
+metadata:
+  name: myrc
+spec:
+  replicas: 2            # this element defines the desired number of pods
+  selector:        # tells the controller which pods to watch/belong to this Replication Controller
+    myname: adam                                # these must match the labels
+  template:                # template element defines a template to launch a new pod
+    metadata:
+      name: testpod6
+      labels:            
+        myname: adam
+    spec:
+     containers:
+       - name: c00
+         image: ubuntu
+         command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+
+$ kubectl get rc
+$ kubectl scale --replicas=3 rc -l myname=adam
+===============================
+kind: ReplicaSet                                      # Defines the object to be ReplicaSet
+apiVersion: apps/v1                               # Replicaset is not available on v1
+metadata:
+  name: myrs
+spec:
+  replicas: 2  
+  selector:                  
+    matchExpressions:                             # these must match the labels
+      - {key: myname, operator: In, values: [adam, adamm, aadam]}
+      - {key: env, operator: NotIn, values: [production]}
+  template:      
+    metadata:
+      name: testpod7
+      labels:              
+        myname: adam
+    spec:
+     containers:
+       - name: c00
+         image: ubuntu
+         command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+====
+class -1st july
+============
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+   name: mydeployments
+spec:
+   replicas: 2
+   selector:      # tells the controller which pods to watch/belong to
+    matchLabels:
+     name: deployment
+   template:
+     metadata:
+       name: testpod8
+       labels:
+         name: deployment
+     spec:
+      containers:
+        - name: c00
+          image: ubuntu
+          command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5; done"]
+
+$ kubectl get deploy
+$ kubectl scale --replicas=<num> deployment/<deploymentname>
+
+RS: mydeployments-9b6b9bd55 -> ubuntu/hello-adam - 1 replica (0 replicas)
+RS: mydeployments-6cb9c6d97b -> centos/hello-students - 2 replica
+
+$ kubectl rollout status deployment mydeployments
+$ kubectl rollout history deployment mydeployments
+$ kubectl rollout undo deploy/mydeployments --to-revision=1
+=================
+kind: Pod
+apiVersion: v1
+metadata:
+  name: testpod
+spec:
+  containers:
+    - name: c00
+      image: ubuntu
+      command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+    - name: c01
+      image: httpd
+      ports:
+       - containerPort: 80
+================
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+   name: mydeployments
+spec:
+   replicas: 1
+   selector:      # tells the controller which pods to watch/belong to
+    matchLabels:
+     name: deployment
+   template:
+     metadata:
+       name: testpod8
+       labels:
+         name: deployment
+     spec:
+      containers:
+        - name: c00
+          image: httpd
+          ports:
+          - containerPort: 80
+====================
+kind: Service                             # Defines to create Service type Object
+apiVersion: v1
+metadata:
+  name: demoservice
+spec:
+  ports:
+    - port: 80                               # Containers port exposed
+      targetPort: 80                     # Pods port
+  selector:
+    name: deployment                    # Apply this service to any pods which has the specific label
+  type: ClusterIP                       # Specifies the service type i.e ClusterIP or NodePort
+
+$ kubectl get svc
+===========================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myvolemptydir
+spec:
+  containers:
+  - name: c1
+    image: centos
+    command: ["/bin/bash", "-c", "sleep 10000"]
+    volumeMounts:                                    # Mount definition inside the container
+      - name: xchange
+        mountPath: "/tmp/xchange"          # Path inside the container to share
+  - name: c2
+    image: centos
+    command: ["/bin/bash", "-c", "sleep 10000"]
+    volumeMounts:
+      - name: xchange
+        mountPath: "/tmp/data"
+  volumes:                                                      # Definition for host
+  - name: xchange
+    emptyDir: {}
+========================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myvolhostpath
+spec:
+  containers:
+  - image: centos
+    name: testc
+    command: ["/bin/bash", "-c", "sleep 10000"]
+    volumeMounts:
+    - mountPath: /tmp/hostpath
+      name: testvolume
+  volumes:
+  - name: testvolume
+    hostPath:
+      path: /tmp/data 
+=======
+july-3rd
+=======
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: myebsvol
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  awsElasticBlockStore:
+    volumeID: vol-0d9ce9a01d4afc21a
+    fsType: ext4
+============
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myebsvolclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+-----------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pvdeploy
+spec:
+  replicas: 1
+  selector:      # tells the controller which pods to watch/belong to
+    matchLabels:
+     app: mypv
+  template:
+    metadata:
+      labels:
+        app: mypv
+    spec:
+      containers:
+      - name: shell
+        image: centos
+        command: ["bin/bash", "-c", "sleep 10000"]
+        volumeMounts:
+        - name: mypd
+          mountPath: "/tmp/persistent"
+      volumes:
+        - name: mypd
+          persistentVolumeClaim:
+            claimName: myebsvolclaim
+============
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: liveness
+  name: mylivenessprobe
+spec:
+  containers:
+  - name: liveness
+    image: ubuntu
+    args:
+    - /bin/sh
+    - -c
+    - touch /tmp/healthy; sleep 1000
+    livenessProbe:                                           # define the health check
+      exec:
+        command:                                              # command to run periodically
+        - cat                
+        - /tmp/healthy
+      initialDelaySeconds: 5           # Wait for the specified time before it runs the first probe
+      periodSeconds: 5                                   # Run the above command every 5 sec
+      timeoutSeconds: 30                              
+
+
+8:11:00 - container started
+    :15 - application started
+------------------------------ health started
+8:11:20 - first health check
+
+$ kubectl create configmap mymap --from-file=sample.conf
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myvolconfig
+spec:
+  containers:
+  - name: c1
+    image: centos
+    command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+    volumeMounts:
+      - name: testconfigmap
+        mountPath: "/tmp/config"   # the config files will be mounted as ReadOnly by default here
+  volumes:
+  - name: testconfigmap
+    configMap:
+       name: mymap   # this should match the config map name created in the first step
+       items:
+       - key: sample.conf
+         path: sample.conf
+---------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myenvconfig
+spec:
+  containers:
+  - name: c1
+    image: centos
+    command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+    env:
+    - name: MYENV         # env name in which value of the key is stored
+      valueFrom:
+        configMapKeyRef:
+          name: mymap      # name of the config created
+          key: sample.conf            
+-----------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myvolsecret
+spec:
+  containers:
+  - name: c1
+    image: centos
+    command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+    volumeMounts:
+      - name: testsecret
+        mountPath: "/tmp/mysecrets"   # the secret files will be mounted as ReadOnly by default here
+  volumes:
+  - name: testsecret
+    secret:
+       secretName: mysecret  
+==============================namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+   name: dev
+   labels:
+     name: dev
+
+$ kubectl config set-context $(kubectl config current-context) --namespace=dev
+$ kubectl config view | grep namespace:
+===============
+apiVersion: v1
+kind: Pod
+metadata:
+  name: resources
+spec:
+  containers:
+  - name: resource
+    image: centos
+    command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+    resources:                                            # Describes the type of resources to be used
+      requests:
+        memory: "64Mi"
+        cpu: "100m"
+      limits:
+        memory: "128Mi"
+        cpu: "200m"
+============resourcequota
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+   name: myquota
+spec:
+  hard:
+    limits.cpu: "400m"
+    limits.memory: "400Mi"
+    requests.cpu: "200m"
+    requests.memory: "200Mi"
+=======
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: deployments
+spec:
+  replicas: 3
+  selector:      
+    matchLabels:
+     objtype: deployment
+  template:
+    metadata:
+      name: testpod8
+      labels:
+        objtype: deployment
+    spec:
+     containers:
+       - name: c00
+         image: ubuntu
+         command: ["/bin/bash", "-c", "while true; do echo Hello-Adam; sleep 5 ; done"]
+         resources:
+            requests:
+              cpu: "200m"
+==========
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cpu-limit-range
+spec:
+  limits:
+  - default:
+      cpu: 1
+    defaultRequest:
+      cpu: 0.5
+    type: Container
+
+==============cpu2.yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: default-cpu-demo-2
+spec:
+  containers:
+  - name: default-cpu-demo-2-ctr
+    image: nginx
+    resources:
+      limits:
+        cpu: "1"
+========================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: default-cpu-demo-3
+spec:
+  containers:
+  - name: default-cpu-demo-3-ctr
+    image: nginx
+    resources:
+      requests:
+        cpu: "0.75"
+====================
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: mem-min-max-demo-lr
+spec:
+  limits:
+  - max:
+      memory: 1Gi
+    min:
+      memory: 500Mi
+    type: Container
+==========
+apiVersion: v1
+kind: Pod
+metadata:
+  name: constraints-mem-demo
+spec:
+  containers:
+  - name: constraints-mem-demo-ctr
+    image: nginx
+    resources:
+      limits:
+        memory: "800Mi"
+      requests:
+        memory: "600Mi"
+
+
+- If request is not specified & limit is given, then request = limit
+=================
+$ wget -O metricserver.yml https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.6/components.yaml
+--------------
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+   name: mydeploy
+spec:
+   replicas: 1
+   selector:
+    matchLabels:
+     name: deployment
+   template:
+     metadata:
+       name: testpod8
+       labels:
+         name: deployment
+     spec:
+      containers:
+        - name: c00
+          image: httpd
+          ports:
+          - containerPort: 80
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m
+---------------------
+$ kubectl autoscale deployment mydeploy --cpu-percent=20 --min=1 --max=10
+--------------
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: myhpamem
+spec:
+  maxReplicas: 5
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mydeploy
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageUtilization: 30

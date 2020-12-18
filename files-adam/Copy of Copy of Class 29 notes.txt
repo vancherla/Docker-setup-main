@@ -1,0 +1,36 @@
+$ apt update
+$ apt install -y ansible
+
+/etc/ansible/ansible.cfg, hosts
+
+[groupname]
+machine1 username, password, IP/FQDN
+machine2 username, password, IP/FQDN
+machine3 username, password, IP/FQDN
+<MachineName> ansible_host=<<ec2-private-ip>> ansible_user=<<ec2-user>> ansible_ssh_private_key_file=/location/of/the/keypair/your-key.pem
+
+[demo]
+Node01 ansible_host=172.31.14.11 ansible_user=ubuntu ansible_ssh_private_key_file=/etc/ansible/wezva.pem
+
+[local]
+Master ansible_host=172.31.10.6 ansible_user=ubuntu ansible_ssh_private_key_file=/etc/ansible/wezva.pem
+
+ADHOC
+=====
+$ ansible <host-pattern> -s -m <module> -a <arbituary-options>
+          machinename|groupname|all      module-properties|OS-cmd
+
+$ ansible demo -m ping
+$ ansible demo -m copy -a "src=testfile  dest=/tmp/testfile"
+$ ansible demo -s -m apt -a "name=git state=present"
+                                         present|absent|latest  
+$ ansible demo -s -m apt -a "name=apache2 state=present"  
+$ ansible demo -s -m service -a "name=apache2 state=started"
+                                               started|stopped|restarted
+$ ansible demo -s -m user -a "name=adam state=present"
+$ ansible demo -m command -a "ls"
+
+Thanks & Regards,
+
+*Ajitha Gomathi*
+*WEZVA Coordinator* | Mob : +91-9739110917
